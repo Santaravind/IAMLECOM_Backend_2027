@@ -1,0 +1,123 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RegistrationStatus {
+  pending
+  verified
+  rejected
+}
+
+enum PresentationType {
+  oral
+  poster
+  attending
+}
+
+enum PayMode {
+  upi
+  neft
+  swift
+}
+
+enum AdminRole {
+  super_admin
+  admin
+}
+
+enum EmailType {
+  acknowledgment
+  confirmation
+  rejection
+}
+
+model Registration {
+  id                   String              @id @default(uuid())
+  refId                String              @unique @map("ref_id")
+  eventPassId          String?             @map("event_pass_id")
+  
+  // Personal Details
+  name                 String
+  email                String
+  countryCode          String              @map("country_code")
+  mobile               String
+  designation          String
+  institution          String
+  country              String
+  address              String
+
+  // Category & Presentation
+  categoryId           String              @map("category_id")       // A, B, C, D
+  categoryName         String              @map("category_name")
+  presentation         PresentationType
+  abstractTitle        String?             @map("abstract_title")
+
+  // Fee & Period
+  period               String                                        // Early Bird, Late Bird, On Spot
+  applicableFee        String              @map("applicable_fee")
+
+  // Payment Details
+  payMode              PayMode             @map("pay_mode")
+  payerName            String?             @map("payer_name")
+  bankName             String?             @map("bank_name")
+  utr                  String
+  payDate              DateTime            @map("pay_date") @db.Date
+
+  // Cloudinary Receipt Image
+  receiptImageUrl      String              @map("receipt_image_url")
+  receiptCloudinaryId  String              @map("receipt_cloudinary_id")
+  receiptFileName      String              @map("receipt_file_name")
+
+  // Optional
+  payRemarks           String?             @map("pay_remarks")
+
+  // Verification Status
+  status               RegistrationStatus  @default(pending)
+  adminNotes           String?             @map("admin_notes")
+  verifiedBy           String?             @map("verified_by")
+  verifiedAt           DateTime?           @map("verified_at")
+
+  // Timestamps
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  emailLogs            EmailLog[]
+
+  @@map("registrations")
+}
+
+model Admin {
+  id            String    @id @default(uuid())
+  username      String    @unique
+  passwordHash  String    @map("password_hash")
+  fullName      String    @map("full_name")
+  email         String    @unique
+  role          AdminRole @default(admin)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("admins")
+}
+
+model EmailLog {
+  id               String    @id @default(uuid())
+  registrationId   String    @map("registration_id")
+  emailType        EmailType @map("email_type")
+  toEmail          String    @map("to_email")
+  resendMessageId  String?   @map("resend_message_id")
+  status           String    // "sent" or "failed"
+  errorMessage     String?   @map("error_message")
+  sentAt           DateTime  @default(now()) @map("sent_at")
+
+  registration     Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@map("email_logs")
+}
+
