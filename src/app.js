@@ -39,32 +39,23 @@ const corsOptions = {
 
     const cleanOrigin = origin.trim().replace(/\/+$/, '');
 
-    // Allow wildcard
-    if (allowedOrigins.includes('*')) {
-      return callback(null, true);
-    }
-
-    // Exact match in allowed origins
-    if (allowedOrigins.includes(cleanOrigin)) {
-      return callback(null, true);
-    }
-
-    // Match any subdomain of iamlecon.com
-    if (/^https?:\/\/([a-z0-9-]+\.)*iamlecon\.com$/i.test(cleanOrigin)) {
+    // Allow any iamlecon.com domain or subdomain (with or without www)
+    if (/iamlecon\.com/i.test(cleanOrigin)) {
       return callback(null, true);
     }
 
     // Match Vercel preview or production URLs
-    if (/^https?:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(cleanOrigin)) {
+    if (/vercel\.app/i.test(cleanOrigin)) {
       return callback(null, true);
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      console.warn(`[CORS Blocked] Origin: ${cleanOrigin}`);
-      return callback(null, false);
+    // Exact match in allowed origins or localhost
+    if (allowedOrigins.includes(cleanOrigin) || /localhost|127\.0\.0\.1/i.test(cleanOrigin)) {
+      return callback(null, true);
     }
 
-    return callback(null, true); // Permissive in development
+    // Fallback: allow request to avoid blocking real conference registrants
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
