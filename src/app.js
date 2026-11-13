@@ -18,7 +18,7 @@ app.use(helmet());
 // Cross-Origin Resource Sharing
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
-  : ['http://localhost:5173', 'http://localhost:3000'];
+  : ['https://www.iamlecon.com/'];
 
 app.use(
   cors({
